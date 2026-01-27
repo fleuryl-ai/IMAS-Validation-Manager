@@ -9,7 +9,7 @@ def parse_validation_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # Extraction du Shot ID (ex: 58659)
+    # Shot ID extraction
     shot_match = re.search(r'Tested URI : .*/(\d+)/\d+$', content, re.MULTILINE)
     shot_id = shot_match.group(1) if shot_match else os.path.basename(file_path).split('.')[0]
 
@@ -52,7 +52,7 @@ def save_json(data, directory):
     path = os.path.join(directory, "global_report.json")
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
-    print(f"JSON généré : {path}")
+    print(f"JSON generated : {path}")
 
 def save_csv(data, directory):
     path = os.path.join(directory, "global_report.csv")
@@ -65,10 +65,10 @@ def save_csv(data, directory):
             for (rule, msg), shots in rules.items():
                 for s in shots:
                     writer.writerow([ids_name, occ, rule, msg, s['shot'], s['nodes_count'], "|".join(s['nodes'])])
-    print(f"CSV généré : {path}")
+    print(f"CSV generated : {path}")
 
 def process_directory(directory):
-    # Structure pour agrégation : data[ids_key][(rule, msg)] = list of shots
+    # Structure for aggregation : data[ids_key][(rule, msg)] = list of shots
     aggregated = defaultdict(lambda: defaultdict(list))
     
     files = [f for f in os.listdir(directory) if f.endswith('.txt') and "global_report" not in f]
@@ -87,7 +87,7 @@ def process_directory(directory):
     # Export CSV
     save_csv(aggregated, directory)
 
-    # Conversion en dictionnaire simple pour JSON (les clés de dict ne peuvent pas être des tuples)
+    # Conversion to simple dictionary for JSON (dict keys cannot be tuples)
     json_ready = {}
     for ids_key, rules in aggregated.items():
         json_ready[ids_key] = []
@@ -101,7 +101,7 @@ def process_directory(directory):
     save_json(json_ready, directory)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Agrège les rapports de validation IMAS.")
-    parser.add_argument("directory", nargs="?", default=".", help="Répertoire à analyser (défaut: courant)")
+    parser = argparse.ArgumentParser(description="Aggregates IMAS validation reports.")
+    parser.add_argument("directory", nargs="?", default=".", help="Directory to analyze (default: current)")
     args = parser.parse_args()
     process_directory(args.directory)
