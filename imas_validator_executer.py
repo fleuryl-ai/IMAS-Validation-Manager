@@ -69,13 +69,13 @@ def validate_shot(shot):
         with open(CRASH_LOG, "a") as f_crash:
             f_crash.write(f"Shot {shot} : {str(e)}\n")
 
-def run_campaign():
+def run_campaign(start_shot, end_shot):
     if not os.path.exists(COLLECTED_DIR):
         os.makedirs(COLLECTED_DIR)
 
-    print(f"Validation campaign : {START_SHOT} to {END_SHOT}")
+    print(f"Validation campaign : {start_shot} to {end_shot}")
     
-    for shot in range(START_SHOT, END_SHOT + 1):
+    for shot in range(start_shot, end_shot + 1):
         validate_shot(shot)
 
     print("\nCampaign finished.")
@@ -120,9 +120,11 @@ def retry_crashed_shots():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IMAS validation executor")
     parser.add_argument("--retry-crashed", action="store_true", help="Retries shots listed in crashed_validation.txt")
+    parser.add_argument("--start-shot", type=int, default=START_SHOT, help="Start shot number")
+    parser.add_argument("--end-shot", type=int, default=END_SHOT, help="End shot number")
     args = parser.parse_args()
 
     if args.retry_crashed:
         retry_crashed_shots()
     else:
-        run_campaign()
+        run_campaign(args.start_shot, args.end_shot)

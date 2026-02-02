@@ -48,14 +48,14 @@ def parse_validation_file(file_path):
             })
     return shot_id, results
 
-def save_json(data, directory):
-    path = os.path.join(directory, "global_report.json")
+def save_json(data, output_base):
+    path = f"{output_base}.json"
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
     print(f"JSON generated : {path}")
 
-def save_csv(data, directory):
-    path = os.path.join(directory, "global_report.csv")
+def save_csv(data, output_base):
+    path = f"{output_base}.csv"
     with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['IDS', 'Occurrence', 'Rule', 'Message', 'Shot', 'Nodes_Count', 'Nodes'])
@@ -67,7 +67,7 @@ def save_csv(data, directory):
                     writer.writerow([ids_name, occ, rule, msg, s['shot'], s['nodes_count'], "|".join(s['nodes'])])
     print(f"CSV generated : {path}")
 
-def process_directory(directory):
+def process_directory(directory, output_base):
     # Structure for aggregation : data[ids_key][(rule, msg)] = list of shots
     aggregated = defaultdict(lambda: defaultdict(list))
     
@@ -85,7 +85,7 @@ def process_directory(directory):
             })
 
     # Export CSV
-    save_csv(aggregated, directory)
+    save_csv(aggregated, output_base)
 
     # Conversion to simple dictionary for JSON (dict keys cannot be tuples)
     json_ready = {}
@@ -98,10 +98,14 @@ def process_directory(directory):
                 'impacted_shots': shots
             })
     
-    save_json(json_ready, directory)
+    save_json(json_ready, output_base)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Aggregates IMAS validation reports.")
     parser.add_argument("directory", nargs="?", default=".", help="Directory to analyze (default: current)")
+    parser.add_argument("--output", "-o", help="Base path for output files (without extension). Default: <directory>/global_report")
     args = parser.parse_args()
-    process_directory(args.directory)
+    
+    output_base = args.output if args.output else os.path.join(args.directory, "global_report")
+    
+    process_directory(args.directory, output_base)
