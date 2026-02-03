@@ -28,10 +28,16 @@ or you can alternatively install imas-validator from sources (see https://imas-p
   ```
   *   `<START_SHOT_NUMBER>`: (Optional) The first shot number in the campaign. Defaults to `57269`.
   *   `<END_SHOT_NUMBER>`: (Optional) The last shot number in the campaign. Defaults to `58693`.
+  *   `--timeout` or `-t`: (Optional) The maximum time (in seconds) to wait for each validation script to complete before considering it crashed. Defaults to `1000` seconds.
 
   **Example:** To validate shots from 57270 to 57275:
   ```bash
   python imas_validator_executer.py --start-shot 57270 --end-shot 57275
+  ```
+
+  **Example with timeout:** To validate shots from 57270 to 57275 with a 5-minute timeout for each:
+  ```bash
+  python imas_validator_executer.py --start-shot 57270 --end-shot 57275 --timeout 300
   ```
 
 - **Retry crashed validations:**

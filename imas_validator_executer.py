@@ -8,6 +8,7 @@ import re
 # --- CONFIGURATION ---
 START_SHOT = 57269
 END_SHOT = 58693
+TIMEOUT_SECONDS = 1000
 #END_SHOT = 57275
 URI_TEMPLATE = "imas:hdf5?path=/Imas_public/public/imasdb/west/3/{shot}/0"
 
@@ -25,7 +26,7 @@ def get_latest_report_dir():
         return None
     return max(dirs, key=os.path.getmtime)
 
-def validate_shot(shot):
+def validate_shot(shot, timeout):
     """Executes validation for a given shot."""
     uri = URI_TEMPLATE.format(shot=shot)
     print(f"--> Shot {shot} : Validation in progress...", end=" ", flush=True)
@@ -35,7 +36,7 @@ def validate_shot(shot):
     try:
         # Command execution
         # We ignore stdout because the tool already writes its files to validate_reports
-        process = subprocess.run(command, capture_output=True, text=True, timeout=1000)
+        process = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
         
         if process.returncode != 0 and not os.path.exists(VALIDATE_REPORTS_ROOT):
             # If the process fails without even creating a folder
@@ -69,19 +70,19 @@ def validate_shot(shot):
         with open(CRASH_LOG, "a") as f_crash:
             f_crash.write(f"Shot {shot} : {str(e)}\n")
 
-def run_campaign(start_shot, end_shot):
+def run_campaign(start_shot, end_shot, timeout):
     if not os.path.exists(COLLECTED_DIR):
         os.makedirs(COLLECTED_DIR)
 
     print(f"Validation campaign : {start_shot} to {end_shot}")
     
     for shot in range(start_shot, end_shot + 1):
-        validate_shot(shot)
+        validate_shot(shot, timeout)
 
     print("\nCampaign finished.")
     print(f"Files collected in : {COLLECTED_DIR}")
 
-def retry_crashed_shots():
+def retry_crashed_shots(timeout):
     if not os.path.exists(CRASH_LOG):
         print(f"File {CRASH_LOG} not found.")
         return
@@ -115,16 +116,17 @@ def retry_crashed_shots():
         f.writelines(clean_lines)
 
     for shot in sorted(shots_to_retry):
-        validate_shot(shot)
+        validate_shot(shot, timeout)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IMAS validation executor")
     parser.add_argument("--retry-crashed", action="store_true", help="Retries shots listed in crashed_validation.txt")
     parser.add_argument("--start-shot", type=int, default=START_SHOT, help="Start shot number")
     parser.add_argument("--end-shot", type=int, default=END_SHOT, help="End shot number")
+    parser.add_argument("--timeout", "-t", type=int, default=TIMEOUT_SECONDS, help="Timeout for each validation in seconds")
     args = parser.parse_args()
 
     if args.retry_crashed:
-        retry_crashed_shots()
+        retry_crashed_shots(args.timeout)
     else:
-        run_campaign(args.start_shot, args.end_shot)
+        run_campaign(args.start_shot, args.end_shot, args.timeout)
