@@ -31,12 +31,23 @@ def parse_validation_file(file_path):
 
         rule_blocks = re.split(r'\n\s+RULE: ', block)
         for r_block in rule_blocks[1:]:
-            rule_name = re.search(r'^([^\n]+)', r_block).group(1).strip()
-            message = re.search(r'MESSAGE:\s*(.*)', r_block).group(1).strip()
-            nodes_count = re.search(r'NODES COUNT:\s*(\d+)', r_block).group(1).strip()
+            rule_name_match = re.search(r'^([^\n]+)', r_block)
+            rule_name = rule_name_match.group(1).strip() if rule_name_match else ""
+
+            # Gère correctement les messages multi-lignes en s'arrêtant avant la section suivante.
+            message_match = re.search(r'MESSAGE:\s*(.*?)(?=\n\s*NODES COUNT:|\n\s*NODES:|$)', r_block, re.DOTALL)
+            message = message_match.group(1).strip() if message_match else ""
+
+            nodes_count_match = re.search(r'NODES COUNT:\s*(\d+)', r_block)
+            nodes_count = nodes_count_match.group(1).strip() if nodes_count_match else "0"
             
-            nodes_match = re.search(r'NODES:\s*\[(.*?)\]', r_block, re.DOTALL)
-            nodes = [n.strip().replace("'", "") for n in nodes_match.group(1).split(',')] if nodes_match else []
+            nodes_match = re.search(r'NODES:\s*\[(.*)\]', r_block, re.DOTALL)
+            nodes = []
+            if nodes_match:
+                nodes_str = nodes_match.group(1).strip()
+                if nodes_str:
+                    # Filtre les chaînes vides (ex: virgule en fin de liste)
+                    nodes = [n.strip().replace("'", "") for n in nodes_str.split(',') if n.strip()]
 
             results.append({
                 'ids': ids_name,
