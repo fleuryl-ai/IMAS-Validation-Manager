@@ -78,7 +78,7 @@ How to Use:
 
 bash
 python report_viewer.py [PATH_TO_JSON_FILE]
-- [PATH_TO_JSON_FILE]: (Optional) The path to the .json report you want to view. If not provided, it defaults to votre_rapport.json in the current directory.
+- [PATH_TO_JSON_FILE]: (Optional) The path to the .json report you want to view. If not provided, it defaults to myreport.json in the current directory.
 
 Example: To view the report generated in the previous step (global_report.json):
 bash
