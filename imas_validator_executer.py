@@ -6,17 +6,18 @@ import argparse
 import re
 
 # --- CONFIGURATION ---
-START_SHOT = 57269
-END_SHOT = 58693
-TIMEOUT_SECONDS = 1000
-#END_SHOT = 57275
-URI_TEMPLATE = "imas:hdf5?path=/Imas_public/public/imasdb/west/3/{shot}/0"
+START_SHOT = -1
+END_SHOT = -1
+
+DEFAULT_URI_TEMPLATE = ""
 
 # Source folder created by imas_validator
-VALIDATE_REPORTS_ROOT = "validate_reports"
+VALIDATE_REPORTS_ROOT = "test_validate_reports"
 # Folder where we will centralize all .txt files for the global report
-COLLECTED_DIR = "collected_txt_reports"
-CRASH_LOG = "crashed_validation.txt"
+COLLECTED_DIR = "test_collected_txt_reports"
+CRASH_LOG = "test_crashed_validation.txt"
+
+TIMEOUT_SECONDS = 1000
 
 def get_latest_report_dir():
     """Finds the most recent directory in validate_reports."""
@@ -26,9 +27,9 @@ def get_latest_report_dir():
         return None
     return max(dirs, key=os.path.getmtime)
 
-def validate_shot(shot, timeout):
+def validate_shot(shot, timeout, uri_template):
     """Executes validation for a given shot."""
-    uri = URI_TEMPLATE.format(shot=shot)
+    uri = uri_template.format(shot=shot)
     print(f"--> Shot {shot} : Validation in progress...", end=" ", flush=True)
     
     command = ["imas_validator", "validate", uri, "--verbose"]
@@ -70,19 +71,19 @@ def validate_shot(shot, timeout):
         with open(CRASH_LOG, "a") as f_crash:
             f_crash.write(f"Shot {shot} : {str(e)}\n")
 
-def run_campaign(start_shot, end_shot, timeout):
+def run_campaign(start_shot, end_shot, timeout, uri_template):
     if not os.path.exists(COLLECTED_DIR):
         os.makedirs(COLLECTED_DIR)
 
     print(f"Validation campaign : {start_shot} to {end_shot}")
     
     for shot in range(start_shot, end_shot + 1):
-        validate_shot(shot, timeout)
+        validate_shot(shot, timeout, uri_template)
 
     print("\nCampaign finished.")
     print(f"Files collected in : {COLLECTED_DIR}")
 
-def retry_crashed_shots(timeout):
+def retry_crashed_shots(timeout, uri_template):
     if not os.path.exists(CRASH_LOG):
         print(f"File {CRASH_LOG} not found.")
         return
@@ -116,7 +117,7 @@ def retry_crashed_shots(timeout):
         f.writelines(clean_lines)
 
     for shot in sorted(shots_to_retry):
-        validate_shot(shot, timeout)
+        validate_shot(shot, timeout, uri_template)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IMAS validation executor")
@@ -124,9 +125,21 @@ if __name__ == "__main__":
     parser.add_argument("--start-shot", type=int, default=START_SHOT, help="Start shot number")
     parser.add_argument("--end-shot", type=int, default=END_SHOT, help="End shot number")
     parser.add_argument("--timeout", "-t", type=int, default=TIMEOUT_SECONDS, help="Timeout for each validation in seconds")
+    
+    default_uri = os.environ.get("IMAS_URI_TEMPLATE") or DEFAULT_URI_TEMPLATE
+    parser.add_argument("--uri-template", default=default_uri, help="URI template for IMAS (contains {shot})")
     args = parser.parse_args()
 
+    # --- Arguments validation ---
+    if not args.uri_template:
+        parser.error("The URI template is missing. Provide it via --uri-template, the IMAS_URI_TEMPLATE environment variable, or by setting DEFAULT_URI_TEMPLATE in the script.")
+
+    if "{shot}" not in args.uri_template:
+        parser.error("The URI template must contain the placeholder '{shot}'.")
+
     if args.retry_crashed:
-        retry_crashed_shots(args.timeout)
+        retry_crashed_shots(args.timeout, args.uri_template)
     else:
-        run_campaign(args.start_shot, args.end_shot, args.timeout)
+        if args.start_shot <= 0 or args.end_shot <= 0:
+            parser.error("--start-shot and --end-shot are required (or must be configured in script).")
+        run_campaign(args.start_shot, args.end_shot, args.timeout, args.uri_template)

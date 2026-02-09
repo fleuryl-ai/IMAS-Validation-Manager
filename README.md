@@ -24,26 +24,27 @@ or you can alternatively install imas-validator from sources (see https://imas-p
 
 - **Run a validation campaign for a range of shots:**
   ```bash
-  python imas_validator_executer.py --start-shot <START_SHOT_NUMBER> --end-shot <END_SHOT_NUMBER>
+  python imas_validator_executer.py --start-shot <START_SHOT_NUMBER> --end-shot <END_SHOT_NUMBER> --uri-template "<URI_TEMPLATE>"
   ```
   *   `<START_SHOT_NUMBER>`: (Optional) The first shot number in the campaign. Defaults to `57269`.
   *   `<END_SHOT_NUMBER>`: (Optional) The last shot number in the campaign. Defaults to `58693`.
   *   `--timeout` or `-t`: (Optional) The maximum time (in seconds) to wait for each validation script to complete before considering it crashed. Defaults to `1000` seconds.
+   *   Alternatively, you can set the `IMAS_URI_TEMPLATE` environment variable or set this variable in the script file.
 
   **Example:** To validate shots from 57270 to 57275:
   ```bash
-  python imas_validator_executer.py --start-shot 57270 --end-shot 57275
+  python imas_validator_executer.py --start-shot 57270 --end-shot 57275 --uri-template "imas:hdf5?path=/Imas_public/public/imasdb/west/3/{shot}/0"
   ```
 
   **Example with timeout:** To validate shots from 57270 to 57275 with a 5-minute timeout for each:
   ```bash
-  python imas_validator_executer.py --start-shot 57270 --end-shot 57275 --timeout 300
+  python imas_validator_executer.py --start-shot 57270 --end-shot 57275 --timeout 300 --uri-template "imas:hdf5?path=/Imas_public/public/imasdb/west/3/{shot}/0"
   ```
 
 - **Retry crashed validations:**
   If previous runs resulted in crashes (recorded in `crashed_validation.txt`), you can retry only those specific shots:
   ```bash
-  python imas_validator_executer.py --retry-crashed
+  python imas_validator_executer.py --retry-crashed --uri-template "imas:hdf5?path=/Imas_public/public/imasdb/west/3/{shot}/0"
   ```
 
 **Output:**
