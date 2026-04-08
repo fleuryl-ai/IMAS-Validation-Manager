@@ -12,10 +12,10 @@ END_SHOT = -1
 DEFAULT_URI_TEMPLATE = ""
 
 # Source folder created by imas_validator
-VALIDATE_REPORTS_ROOT = "test_validate_reports"
+VALIDATE_REPORTS_ROOT = "validate_reports"
 # Folder where we will centralize all .txt files for the global report
-COLLECTED_DIR = "test_collected_txt_reports"
-CRASH_LOG = "test_crashed_validation.txt"
+COLLECTED_DIR = "collected_txt_reports"
+CRASH_LOG = "crashed_validation.txt"
 
 TIMEOUT_SECONDS = 1000
 
